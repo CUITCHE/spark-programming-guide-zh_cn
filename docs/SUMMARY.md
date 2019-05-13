@@ -15,7 +15,7 @@
     * [通过Java/Scala启动Spark任务](RDDs/launching_spark_jobs_from_Java_or_Scala.md)
     * [单元测试](RDDs/unit_testing.md)
     * [下一步](RDDs/where_to_go_from_here.md)
-* [Spark SQL指南](RDDs/README.md)
+* [Spark SQL指南](spark_sql_guide/README.md)
     * [入门](spark_sql_guide/getting_started.md)
     * [数据源](spark_sql_guide/data_sources.md)
     * [性能调优](spark_sql_guide/performance_tuning.md)
