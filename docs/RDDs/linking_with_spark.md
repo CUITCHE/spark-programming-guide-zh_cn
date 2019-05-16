@@ -1,6 +1,6 @@
 # 引入Spark
 
-Spark2.4.3需要Python2.7+或者Python3.4+，它用标准CPython解释器，所以一些C语言库，比如`NumPy`，还可以用PyPy2.3+运行。
+Spark2.4.3需要Python2.7+或者Python3.4+，它用标准CPython解释器，所以一些C语言库（比如`NumPy`）也能被引入使用。还可以用PyPy2.3+运行。
 
 对Python2.6的支持，已在Spark2.2.0后移除了。
 

@@ -1,8 +1,38 @@
 {
+    "title": "Spark2.4.3官方文档中文指南",
+    "author": "清元子<ihejunqiu@icloud.com>",
     "root": "./docs",
     "language": "zh-hans",
-    "theme-default": {
-        "showLevel": true
-    },
-    "plugins": ["toggle-chapters", "theme-comscore", "expandable-chapters", "codeblock-filename"]
+    "plugins": ["sharing-plus"],
+    "pluginsConfig": {
+        "sharing": {
+            "douban": false,
+            "facebook": false,
+            "google": false,
+            "hatenaBookmark": false,
+            "instapaper": false,
+            "line": false,
+            "linkedin": false,
+            "messenger": false,
+            "pocket": false,
+            "qq": true,
+            "qzone": true,
+            "stumbleupon": false,
+            "twitter": false,
+            "viber": false,
+            "vk": false,
+            "weibo": true,
+            "whatsapp": false,
+            "all": [
+                "facebook",
+                "google",
+                "twitter",
+                "weibo",
+                "qq",
+                "linkedin",
+                "qzone",
+                "douban"
+            ]
+        }
+    }
 }

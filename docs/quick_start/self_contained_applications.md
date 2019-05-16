@@ -4,7 +4,6 @@
 
 在`setup.py`中添加以下内容：
 
-!FILENAME setup.py
 ```python
 install_requires=[
         'pyspark=={site.SPARK_VERSION}'
@@ -12,8 +11,6 @@ install_requires=[
 ```
 
 我们创建一个简单的Spark application示例代码
-
-!FILENAME SimpleApp.py
 
 ```python
 from pyspark.sql import SparkSession
