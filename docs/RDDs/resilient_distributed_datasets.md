@@ -250,9 +250,9 @@ counts = pairs.reduceByKey(lambda a, b: a + b)
 
 | Transformation                                               | Meaning                                                      |
 | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| **map**(*func*)                                              | Return a new distributed dataset formed by passing each element of the source through a function *func*. |
-| **filter**(*func*)                                           | Return a new dataset formed by selecting those elements of the source on which *func*returns true. |
-| **flatMap**(*func*)                                          | Similar to map, but each input item can be mapped to 0 or more output items (so *func*should return a Seq rather than a single item). |
+| **map**(*func*)                                              | 返回一个新的分布式数据集，该数据集由函数func传递source的每个元素而形成。 |
+| **filter**(*func*)                                           | 返回一个新的数据集，过滤掉func返回false的元素。              |
+| **flatMap**(*func*)                                          | Similar to map, but each input item can be mapped to 0 or more output items (so *func* should return a Seq rather than a single item).与map相似，但每个输入项都可以映射到0个或多个输出项（因此func应该返回一个序列而不是） |
 | **mapPartitions**(*func*)                                    | Similar to map, but runs separately on each partition (block) of the RDD, so *func* must be of type Iterator<T> => Iterator<U> when running on an RDD of type T. |
 | **mapPartitionsWithIndex**(*func*)                           | Similar to mapPartitions, but also provides *func* with an integer value representing the index of the partition, so *func* must be of type (Int, Iterator<T>) => Iterator<U> when running on an RDD of type T. |
 | **sample**(*withReplacement*, *fraction*, *seed*)            | Sample a fraction *fraction* of the data, with or without replacement, using a given random number generator seed. |
