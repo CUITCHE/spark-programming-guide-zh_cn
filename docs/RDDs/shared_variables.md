@@ -26,7 +26,7 @@ Spark `actions`通过一组阶段（stages）执行，由分布式『shuffle』�
 
 作为用户，您可以创建命名或未命名的累加器。如下图所示，对于修改累加器的阶段，Web UI中将显示一个命名的累加器（在此实例`counter`中）。Spark在『tasks』表中显示由任务修改的每个累加器的值。
 
-![spark-webui-accumulators](/Users/hejunqiu/Documents/github-repo/spark-programming-guide-zh_cn/assets/images/spark-webui-accumulators.png)
+![spark-webui-accumulators](../../assets/images/spark-webui-accumulators.png)
 
 在UI中跟踪累加器对于了解运行阶段的进度很有用（注意：Python尚不支持）。
 
