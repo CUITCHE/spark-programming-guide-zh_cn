@@ -41,7 +41,7 @@ distFile.map(lambda s: len(s)).reduce(lambda a, b: a + b)
 
 除了文本文件外，Spark的Python API还支持其他几种数据格式：
 
-- `SparkContext.wholeTextFiles`读取一个目录下所有的文本文件，然后返回<文件名, 文件内容>对（pair）。它不同于`textFile`，`textFile`是读取文件内容并按行返回。
+- `SparkContext.wholeTextFiles`读取一个目录下所有的文本文件，然后返回<文件名, 文件内容>对（Pair）。它不同于`textFile`，`textFile`是读取文件内容并按行返回。
 
 - `RDD.saveAsPickleFile`和`SparkContext.pickleFile`支持以一种简单格式保存RDD，由pickle模块序列化python对象。批处理用于pickle序列化，默认批处理大小为10。
 
@@ -228,7 +228,7 @@ print("Counter value: ", counter)
 
 另一个常见的习惯用法是使用`rdd.foreach(println)`或 `rdd.map(println)`打印出RDD的元素。在一台机器上，这将生成预期的输出并打印所有RDD元素。但是，在集群模式下，执行器调用的stdout现在正在写入执行器的stdout，而不是驱动程序上的。因此，驱动程序上的stdout不会显示这些内容！要打印驱动程序上的所有元素，可以使用`collect()`方法，将RDD带到驱动程序节点，即`rdd.collect().foreach(println)`。但是，这可能会导致驱动程序耗尽内存，因为`collect()`将整个RDD提取到一台机器上；如果只需要打印RDD的几个元素，则更安全的方法是使用`take()`：`rdd.take(100).foreach(println)`。
 
-### 键值对
+### 使用键值对
 
 虽然大多数Spark运算都在包含任意类型对象的RDD上工作，但只有少数特殊运算只在键值对RDD上可用。最常见的是分布式**混洗（Shuffle）**运算，例如通过`key`分组或聚合元素。
 
@@ -244,7 +244,7 @@ counts = pairs.reduceByKey(lambda a, b: a + b)
 
 再例如，我们还可以使用`counts.sortByKey()`按字母顺序对这些pairs进行排序，最后使用`counts.collect()`将他们作为对象列表返回驱动程序。
 
-### 转换
+### 转换（Transformation）
 
 下表列出了Spark支持的常见转换。有关详细信息，请参考RDD API文档 （[Scala](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD), [Java](http://spark.apache.org/docs/latest/api/java/index.html?org/apache/spark/api/java/JavaRDD.html), [Python](http://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.RDD), [R](http://spark.apache.org/docs/latest/api/R/index.html)）和pairRDD函数文档（[Scala](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions), [Java](http://spark.apache.org/docs/latest/api/java/index.html?org/apache/spark/api/java/JavaPairRDD.html)）。
 
@@ -252,26 +252,26 @@ counts = pairs.reduceByKey(lambda a, b: a + b)
 | :----------------------------------------------------------- | :----------------------------------------------------------- |
 | **map**(*func*)                                              | 返回一个新的分布式数据集，该数据集由函数func传递source的每个元素而形成。 |
 | **filter**(*func*)                                           | 返回一个新的数据集，过滤掉func返回false的元素。              |
-| **flatMap**(*func*)                                          | Similar to map, but each input item can be mapped to 0 or more output items (so *func* should return a Seq rather than a single item).与map相似，但每个输入项都可以映射到0个或多个输出项（因此func应该返回一个序列而不是） |
-| **mapPartitions**(*func*)                                    | Similar to map, but runs separately on each partition (block) of the RDD, so *func* must be of type Iterator<T> => Iterator<U> when running on an RDD of type T. |
-| **mapPartitionsWithIndex**(*func*)                           | Similar to mapPartitions, but also provides *func* with an integer value representing the index of the partition, so *func* must be of type (Int, Iterator<T>) => Iterator<U> when running on an RDD of type T. |
-| **sample**(*withReplacement*, *fraction*, *seed*)            | Sample a fraction *fraction* of the data, with or without replacement, using a given random number generator seed. |
-| **union**(*otherDataset*)                                    | Return a new dataset that contains the union of the elements in the source dataset and the argument. |
-| **intersection**(*otherDataset*)                             | Return a new RDD that contains the intersection of elements in the source dataset and the argument. |
-| **distinct**([*numPartitions*]))                             | Return a new dataset that contains the distinct elements of the source dataset. |
-| **groupByKey**([*numPartitions*])                            | When called on a dataset of (K, V) pairs, returns a dataset of (K, Iterable<V>) pairs.  **Note:** If you are grouping in order to perform an aggregation (such as a sum or average) over each key, using `reduceByKey` or `aggregateByKey` will yield much better performance.  **Note:** By default, the level of parallelism in the output depends on the number of partitions of the parent RDD. You can pass an optional `numPartitions` argument to set a different number of tasks. |
-| **reduceByKey**(*func*, [*numPartitions*])                   | When called on a dataset of (K, V) pairs, returns a dataset of (K, V) pairs where the values for each key are aggregated using the given reduce function *func*, which must be of type (V,V) => V. Like in `groupByKey`, the number of reduce tasks is configurable through an optional second argument. |
-| **aggregateByKey**(*zeroValue*)(*seqOp*, *combOp*, [*numPartitions*]) | When called on a dataset of (K, V) pairs, returns a dataset of (K, U) pairs where the values for each key are aggregated using the given combine functions and a neutral "zero" value. Allows an aggregated value type that is different than the input value type, while avoiding unnecessary allocations. Like in `groupByKey`, the number of reduce tasks is configurable through an optional second argument. |
-| **sortByKey**([*ascending*], [*numPartitions*])              | When called on a dataset of (K, V) pairs where K implements Ordered, returns a dataset of (K, V) pairs sorted by keys in ascending or descending order, as specified in the boolean `ascending` argument. |
-| **join**(*otherDataset*, [*numPartitions*])                  | When called on datasets of type (K, V) and (K, W), returns a dataset of (K, (V, W)) pairs with all pairs of elements for each key. Outer joins are supported through `leftOuterJoin`, `rightOuterJoin`, and `fullOuterJoin`. |
-| **cogroup**(*otherDataset*, [*numPartitions*])               | When called on datasets of type (K, V) and (K, W), returns a dataset of (K, (Iterable<V>, Iterable<W>)) tuples. This operation is also called `groupWith`. |
+| **flatMap**(*func*)                                          | 与map相似，但每个输入项都可以映射到0个或多个输出项（因此func应该返回一个序列而不是单个元素）。 |
+| **mapPartitions**(*func*)                                    | 与map类似，但它在RDD的每个分区（块）上单独运行，因此当在T类型的RDD上运行时，func必须是`(Iterator<T> => Iterator<U>)`。 |
+| **mapPartitionsWithIndex**(*func*)                           | 与mapPartitions类似，但func的参数多了一个integer类型，代表分区的index，因此当在T类型的RDD上运行时，func必须是`(Int, Iterator<T> => Iterator<U>)`。 |
+| **sample**(*withReplacement*, *fraction*, *seed*)            | 对RDD采样，以及是否需要替换。                                |
+| **union**(*otherDataset*)                                    | 生成一个新的RDD，包含两个RDD中的所有元素。此操作会导致两个RDD中相同的元素也会被包含进去，想要去重请使用`distinct()`。 |
+| **intersection**(*otherDataset*)                             | 求两个RDD的交集，只返回两个RDD中都有的元素。因为会通过网络混洗数据，所以性能较差。 |
+| **distinct**([*numPartitions*]))                             | 去除RDD中重复的元素，有可能会触发网络混洗。                  |
+| **groupByKey**([*numPartitions*])                            | 当调用`Pair<K, V>`（键值对）的RDD时，返回`Pair<K, Iterable<V>>`。**注意：**如果分组是为了对每个键执行聚合操作（如求和或求平均值），则使用`reduceByKey`会带来更好的性能表现。**注意：**默认情况下，输出中的并行度级别取决于父RDD的分区数。可以传递一个可选的`numPartitions`参数来设置不同数量的任务。**一句话总结：对具有相同K的V进行分组。** |
+| **reduceByKey**(*func*, [*numPartitions*])                   | 当对`Pair<K, V>`元素的RDD调用时，返回一个`Pair<K, V>`的RDD，其中每个K的值使用给定的reduce函数func来聚合，该func的类型必须为`(V, V) => V`。与`groupByKey`中一样，reduce任务的数量可以通过可选的第二个参数配置。**一句话总结：合并相同K的V**。 |
+| **aggregateByKey**(*zeroValue*)(*seqOp*, *combOp*, [*numPartitions*]) | 当对`Pair<K, V>`元素的RDD调用时，返回一个`Pair<K, V>`的RDD，其中每个K的值使用给定的组合函数和中性『零』值进行聚合。允许与输入类型不同的聚合值类型，同时避免不必要的分配。与`groupByKey`类似，reduce任务的数量可以通过可选的第二个参数进行配置。 |
+| **sortByKey**([*ascending*], [*numPartitions*])              | 当在K有序的`Pair<K, V>`元素的RDD上调用时，返回一个由K升序或降序`Pair<K, V>`的RDD。**一句话总结：返回一个根据K排序的RDD**。 |
+| **join**(*otherDataset*, [*numPartitions*])                  | 内连接。把元素是`Pair<K, V>`和`Pair<K, W>`的两个RDD连接起来，返回元素是`Pair<K, (V, W)>`的RDD。也支持外连接，比如：`leftOuterJoin`, `rightOuterJoin`和`fullOuterJoin`。 |
+| **cogroup**(*otherDataset*, [*numPartitions*])               | 当调用`Pair<K, V>`和`Pair<K, W>`的RDD时，返回元素是元组`(K, Iterable<V>, Iterable<W>)`的RDD，此操作也可以使用`groupWith`（内部实现就是`cogroup`）来完成 |
 | **cartesian**(*otherDataset*)                                | When called on datasets of types T and U, returns a dataset of (T, U) pairs (all pairs of elements). |
-| **pipe**(*command*, *[envVars]*)                             | Pipe each partition of the RDD through a shell command, e.g. a Perl or bash script. RDD elements are written to the process's stdin and lines output to its stdout are returned as an RDD of strings. |
+| **pipe**(*command*, *[envVars]*)                             | 通过shell命令（例如Perl或者Bash脚本）对RDD的每个分区进行管道连接。RDD的元素写入进程的stdin，输出到stdout的行(lines)作为字符串的RDD返回。 |
 | **coalesce**(*numPartitions*)                                | Decrease the number of partitions in the RDD to numPartitions. Useful for running operations more efficiently after filtering down a large dataset. |
 | **repartition**(*numPartitions*)                             | Reshuffle the data in the RDD randomly to create either more or fewer partitions and balance it across them. This always shuffles all data over the network. |
 | **repartitionAndSortWithinPartitions**(*partitioner*)        | Repartition the RDD according to the given partitioner and, within each resulting partition, sort records by their keys. This is more efficient than calling `repartition` and then sorting within each partition because it can push the sorting down into the shuffle machinery. |
 
-### 处理
+### 处理（Action）
 
 下表列出了Spark支持的常见处理（actions）。有关详细信息，请参考RDD API文档 （[Scala](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD), [Java](http://spark.apache.org/docs/latest/api/java/index.html?org/apache/spark/api/java/JavaRDD.html), [Python](http://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.RDD), [R](http://spark.apache.org/docs/latest/api/R/index.html)）和pairRDD函数文档（[Scala](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions), [Java](http://spark.apache.org/docs/latest/api/java/index.html?org/apache/spark/api/java/JavaPairRDD.html)）。
 
@@ -290,3 +290,69 @@ counts = pairs.reduceByKey(lambda a, b: a + b)
 | **countByKey**()                                   | Only available on RDDs of type (K, V). Returns a hashmap of (K, Int) pairs with the count of each key. |
 | **foreach**(*func*)                                | Run a function *func* on each element of the dataset. This is usually done for side effects such as updating an [Accumulator](http://spark.apache.org/docs/latest/rdd-programming-guide.html#accumulators) or interacting with external storage systems.  **Note**: modifying variables other than Accumulators outside of the `foreach()` may result in undefined behavior. See [Understanding closures ](http://spark.apache.org/docs/latest/rdd-programming-guide.html#understanding-closures-a-nameclosureslinka)for more details. |
 
+### 混洗（shuffle）操作
+
+Spark中某些操作会触发一个称为shuffle的事件。Shuffle是SPark重新分配数据的机制，因此它在分区之间的分组方式不同。这通常涉及到跨执行器和机器拷贝数据，使得shuffle成为一个复杂且昂贵的操作。
+
+> shuffle可以理解为扑克牌中的洗牌操作。后面未将shuffle直接翻译成混洗（洗牌）。
+
+#### 背景
+
+为了理解shuffle过程中会发生什么，我们以`reduceByKey`为例。`reduceByKey`生成一个新的RDD，其中一个Key的所有值组合成一个元组：(Key，以及Key对应的所有值执行reduce函数的结果)。挑战在于，并非所有单个Key的值都必须位于同一分区，甚至同一台机器上，但它们必须位于同一位置上才能计算结果。
+
+在Spark中，数据通常不分布在分区之间，而分布在特定操作所需的位置。在计算过程中，单个任务将在单个分区上操作——因此，要组织所有数据以执行单个`reduceByKey`的reduce任务，spark需要执行一个`all-to-all`的操作。它必须从所有分区中读取以查找所有键的所有值，然后将各个分区中的值组合在一起以计算每个键的最终结果——这被称为`Shuffle`。
+
+虽然新`shuffle`数据的每个分区中的元素集是确定的，分区本身的顺序也是确定的，但这些元素的顺序不是。如果希望在`shuffle`后按预期的顺序排列数据，那么可以使用：
+
+- `mapPartitions`，用于对每个分区进行排序，例如，使用`.sorted`
+- `repartitionAndSortWithinPartitions`，在重新分区的同时对分区进行有效排序
+- `sortBy`，对RDD做全局排序
+
+可能导致`shuffle`操作：`repartition`和`coalesce`操作；所有以**ByKey**为后缀的操作（但不包括`countByKey`），如`groupByKey`、`reduceByKey`等；**join**操作，如`cogroup`、`join`等。
+
+#### 性能影响
+
+`Shuffle`是一项昂贵的操作，因为它设计磁盘I/O、数据序列化和网络I/O。要为`shuffle`操作组织数据，spark会生成一组`map`以**组织**数据，以及一组`reduce`任务以**聚合**数据。这个术语来自`MapReduce`，但与spark的`map`和`reduce`操作没有直接关系。
+
+在内部，来自单个`map`任务结果保存在内存中，直到它们无法容纳为止。然后根据目标分区对它们进行排序，并将其写入单个文件。在`reduce`方面，`reduce`任务读取相关的排序块。
+
+某些`shuffle`操作可能会消耗大量堆内存，因为它们在传输记录之前或之后使用内存中的数据结构来组织记录。具体来说，`reuceByKey`和`aggregateByKey`在`map`端创建这些结构，而**ByKey**操作在`reduce`端生成这些结构。当数据在内存中放不下时，spark会将这些数据存在磁盘上，从而产生额外的磁盘I/O开销和增加垃圾回收操作。
+
+`shuffle`还会在磁盘上生成大量中间文件。从Spark1.3开始，这些文件将被保留，直到不再使用相应的RDD并被回收。这样，如果重新计算，则无需重新创建`shuffle`文件。如果应用程序保留对这些RDD的引用，或者GC不经常启动，垃圾回收可能只在很长一段时间之后发生。这意味着，长时间运行的Spark作业可能会消耗大量的磁盘空间。配置`Spark context`时，临时存储目录有`spark.local.dir`配置参数指定。
+
+可以通过调整各种配置参数来调整`shuffle`行为。请参阅[Spark Configuration Guide](http://spark.apache.org/docs/latest/configuration.html)中『shuffle行为』部分。
+
+## RDD持久化
+
+在Spark中最重要的一项能力就是跨操作在内存中持久化（缓存）数据集。当持久化一个RDD时，每个节点将其计算的任何分区存储在内存中，并在该数据集（或从该数据集派生的数据集）上的其他操作中重用它们。这使得以后的`action`操作更快（通常操作10倍）。缓存是迭代算法和快速交互使用的关键工具。
+
+可以使用`persist()`或`cache()`方法将RDD标记为持久化。第一次在操作中计算它时，它将保存在节点的内存中。Spark的缓存是容错的——如果RDD的任何分区丢失，它将使用最初创建它的`转换`自动重新计算。
+
+此外，每个持久化的RDD可以使用不同的存储级别（levels）来存储，例如，将数据集保存在磁盘上、内存中，但作为序列化的Java对象（以节省空间）将其复制到节点上。调用`persist()`的时候将`StorageLevel`对象（Scala、Java、Python）传入来设置level。`cache()`方法是使用默认存储级别的简写，即`StorageLevel.MEMORY_ONLY`（将反序列化对象存储在内存中）。完整的存储级别列表：
+
+| Storage Level                          | Meaning                                                      |
+| :------------------------------------- | :----------------------------------------------------------- |
+| MEMORY_ONLY                            | Store RDD as deserialized Java objects in the JVM. If the RDD does not fit in memory, some partitions will not be cached and will be recomputed on the fly each time they're needed. This is the default level. |
+| MEMORY_AND_DISK                        | Store RDD as deserialized Java objects in the JVM. If the RDD does not fit in memory, store the partitions that don't fit on disk, and read them from there when they're needed. |
+| MEMORY_ONLY_SER  (Java and Scala)      | Store RDD as *serialized* Java objects (one byte array per partition). This is generally more space-efficient than deserialized objects, especially when using a [fast serializer](http://spark.apache.org/docs/latest/tuning.html), but more CPU-intensive to read. |
+| MEMORY_AND_DISK_SER  (Java and Scala)  | Similar to MEMORY_ONLY_SER, but spill partitions that don't fit in memory to disk instead of recomputing them on the fly each time they're needed. |
+| DISK_ONLY                              | Store the RDD partitions only on disk.                       |
+| MEMORY_ONLY_2, MEMORY_AND_DISK_2, etc. | Same as the levels above, but replicate each partition on two cluster nodes. |
+| OFF_HEAP (experimental)                | Similar to MEMORY_ONLY_SER, but store the data in [off-heap memory](http://spark.apache.org/docs/latest/configuration.html#memory-management). This requires off-heap memory to be enabled. |
+
+**注意：**在Python中，存储的对象将始终使用`pickle`库进行序列化，因此选择序列化级别并不重要。Python中可能的存储级别包括`MEMORY_ONLY`、` MEMORY_ONLY_2`、 `MEMORY_AND_DISK`、 `MEMORY_AND_DISK_2`、 `DISK_ONLY`和`DISK_ONLY_2`。
+
+Spark还在`shuffle`操作中自动保留一些中间数据（如`reduceByKey`），即使没有调用`persisit`。这样做是为了在`shuffle`期间，避免节点失败时重新计算整个输入。我们仍然建议用户在计划重用结果RDD时，对其调用`persist`。
+
+### 选择合适的StorageLevel
+
+Spark的存储级别旨在内存使用率和CPU效率之间提供不同的权衡。我们建议通过以下过程来选择一个合适的：
+
+- 如果你的RDD适合默认的存储级别（**MEMORY_ONLY**），那么就这样。这是CPU效率最高的选项，允许RDD上的操作以尽可能快的速度运行。
+- 如果没有，请尝试使用**MEMORY_ONLY_SER**并选择一个快速序列化库，以使对象更节省空间，但访问速度仍然相当快。（Java和Scala）
+- 除非计算数据集的函数很昂贵，或者它们过滤了大量数据，否则不要溢出到磁盘上。否则，重新计算分区的速度可能与从磁盘读取分区的速度一样快。
+- 如果希望快速故障恢复（例如，如果使用Spark来服务来自Web应用程序的请求），请使用复制的存储级别。所有存储级别都通过重新计算丢失的数据提供了完全的容错性，但是复制的存储级别允许继续在RDD上运行任务，而不必等待重新计算丢失的分区。
+
+### 移除数据
+
+Spark自动监控每个节点上缓存使用情况，并使用流行的LRU（Least-Recently-Used，最近最久未使用）算法移除老旧数据分区。如果要手动删除RDD而不是等待它从缓存中被抹掉，请使用`rdd.unpersist()`方法。
